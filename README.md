@@ -1,4 +1,4 @@
-# Monitor Switch
+# Monitor Switch 🖥️↔️🖥️
 
 Monitor Switch is a small Windows system-tray app for changing monitor input sources without using the monitor's physical buttons. Create profiles for your displays, then apply them from the tray menu, with a keyboard shortcut, or automatically when a USB device connects or disconnects.
 
