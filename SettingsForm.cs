@@ -26,6 +26,7 @@ public sealed class SettingsForm : Form
     private readonly Action<Profile> _apply;
     private List<MonitorInfo> _monitors = new();
     private bool _loading;
+    private bool _startupEdited;
 
     // Profiles tab
     private readonly ProfileListBox _profileList = new() { Dock = DockStyle.Fill, IntegralHeight = false };
@@ -91,6 +92,9 @@ public sealed class SettingsForm : Form
         LoadProfiles();
         LoadUsb();
         _startup.Checked = StartupManager.IsEnabled;
+        _startup.Click += (_, _) => _startupEdited = true;
+        // The setting can be changed outside the app (e.g. Task Manager), so re-read it when the window regains focus.
+        Activated += (_, _) => { if (!_startupEdited) _startup.Checked = StartupManager.IsEnabled; };
 
         Load += async (_, _) =>
         {

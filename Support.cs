@@ -41,20 +41,40 @@ public static class StartupManager
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string ValueName = "MonitorSwitch";
 
+    // Task Manager / Windows Settings keep a separate per-user enabled flag here.
+    private const string ApprovedKey = @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
+
     public static bool IsEnabled
     {
         get
         {
             using var key = Registry.CurrentUser.OpenSubKey(RunKey);
-            return key?.GetValue(ValueName) is string;
+            return key?.GetValue(ValueName) is string && !IsDisabledByWindows();
         }
+    }
+
+    // A set low bit in the first byte means the entry was disabled (e.g. in Task Manager).
+    private static bool IsDisabledByWindows()
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(ApprovedKey);
+        return key?.GetValue(ValueName) is byte[] { Length: > 0 } data && (data[0] & 1) != 0;
     }
 
     public static void Set(bool enabled)
     {
         using var key = Registry.CurrentUser.CreateSubKey(RunKey);
-        if (enabled) key.SetValue(ValueName, $"\"{Environment.ProcessPath}\"");
-        else key.DeleteValue(ValueName, false);
+        if (enabled)
+        {
+            key.SetValue(ValueName, $"\"{Environment.ProcessPath}\"");
+            using var approved = Registry.CurrentUser.CreateSubKey(ApprovedKey);
+            approved.SetValue(ValueName, new byte[] { 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, RegistryValueKind.Binary);
+        }
+        else
+        {
+            key.DeleteValue(ValueName, false);
+            using var approved = Registry.CurrentUser.OpenSubKey(ApprovedKey, writable: true);
+            approved?.DeleteValue(ValueName, false);
+        }
     }
 }
 

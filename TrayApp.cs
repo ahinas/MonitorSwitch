@@ -86,6 +86,8 @@ public sealed class TrayApp : ApplicationContext
         var startup = new ToolStripMenuItem("Start with Windows") { Checked = StartupManager.IsEnabled };
         startup.Click += (_, _) => { StartupManager.Set(!StartupManager.IsEnabled); BuildMenu(); };
         menu.Items.Add(startup);
+        // The setting can change outside the app (e.g. Task Manager), so refresh it each time the menu opens.
+        menu.Opening += (_, _) => startup.Checked = StartupManager.IsEnabled;
 
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Exit", null, (_, _) => ExitThread());
